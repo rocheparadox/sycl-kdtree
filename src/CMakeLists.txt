@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(khalid_kd_tree)
+project(sycl-kdtree)
 
 message(STATUS "Setting icpx as the main compiler")
 set(CMAKE_CXX_COMPILER icpx)
@@ -9,7 +9,7 @@ find_package(oneDPL REQUIRED)
 
 set(TARGET_NAME khalid_kd_tree)
 set(SOURCE_FILE "main.cpp")
-set(COMPILE_AUX_FILES "khalid_kdtree_sycl.hpp" "khalid_nearest_neighbor.h")
+set(COMPILE_AUX_FILES "khalid_kdtree_sycl.hpp" "khalid_nearest_neighbor.hpp")
 set(SYCL_LINKER "-fsycl")
 
 if(DEFINED VERTEX_COUNT)
