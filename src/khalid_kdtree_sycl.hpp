@@ -93,9 +93,9 @@ namespace khalid{
     }
 
 
-    int tree_level_of_node(int index){
+/*    int tree_level_of_node(int index){
         return 31 - sycl::clz(index + 1);
-    }
+    }*/
 
     int get_total_level(int vertex_count){
         return 31 - __builtin_clz(vertex_count) + 1;
@@ -141,9 +141,10 @@ namespace khalid{
     }
 
     template<typename PointDatatype>
-    void build_kdtree(Node<PointDatatype>* device_tree, int total_tree_levels, int vertex_count,
+    void build_kdtree(Node<PointDatatype>* device_tree, int vertex_count,
                       int dimensions, sycl::queue device_queue){
 
+        int total_tree_levels = get_total_level(vertex_count);
         auto start = std::chrono::steady_clock::now();
         for(int idx=0; idx<static_cast<int>(std::log2(vertex_count)); idx++){
 
