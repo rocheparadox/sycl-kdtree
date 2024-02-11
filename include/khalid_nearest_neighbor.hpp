@@ -27,27 +27,10 @@ void get_nearest_neighbor_kernel(khalid::Node<Point>* device_tree, Point  query_
 */
 
 template<typename PointDatatype>
-void get_nearest_neighbor_kernel(khalid::Node<PointDatatype>* modelview_device_tree, PointDatatype* dataview,
-                                 int total_tree_level, int vertex_count, sycl::queue device_queue){
-
-    int* nearest_neighbor_indices = sycl::malloc_shared<int>(vertex_count, device_queue);
-
-    device_queue.submit([&] (sycl::handler &hndlr){
-        hndlr.parallel_for(vertex_count, [=] (sycl::id<1> idx){
-            nearest_neighbor_indices[idx] = get_nearest_neighbor(modelview_device_tree, dataview[idx], total_tree_level);
-        });
-    });
-
-    device_queue.wait();
-/*        for(int idx=0; idx<vertex_count; idx++)
-            std::cout << "\nThe nearest Neighbor of " << dataview[idx] << " is " <<
-                modelview_device_tree[nearest_neighbor_indices[idx]].point << std::flush;*/
-}
-
-template<typename PointDatatype>
 float euclidean_distance(khalid::Point3D<PointDatatype> pointa, khalid::Point3D<PointDatatype> pointb){
     return sqrtf(powf(pointa.x - pointb.x, 2) + powf(pointa.y - pointb.y, 2) + powf(pointa.z - pointb.z, 2));
 }
+
 
 template<typename Point>
 int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, int vertex_count, int dimensions) {
@@ -96,7 +79,7 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
             }
 
             if (khalid::l_child(search_index) < vertex_count && khalid::r_child(search_index) < vertex_count &&
-            static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index].point[sorting_dimension])) <
+                static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index].point[sorting_dimension])) <
                 nearest_neighbor_distance) {
                 /*        std::cout << "\n\n-------XXX Node with point " << current_node_point[splitting_dim] <<
                         " has lower axis distance XXX--------- axis distance : " << std::abs(query_point[splitting_dim] - current_node_point[splitting_dim]) <<
@@ -142,6 +125,24 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
     }
     //std::cout << "\n\nThe nearest neighbour index is " << nearest_neighbor_index << std::flush;
     return nearest_neighbor_index;
+}
+
+template<typename Point>
+void get_nearest_neighbor_kernel(khalid::Node<Point>* modelview_device_tree, Point* dataview,
+                                 int vertex_count, int* nearest_neighbour_index, sycl::queue device_queue
+                                 ){
+
+
+    device_queue.submit([&] (sycl::handler &hndlr){
+        hndlr.parallel_for(vertex_count, [=] (sycl::id<1> idx){
+            nearest_neighbour_index[idx] = get_nearest_neighbor(modelview_device_tree, dataview[idx], vertex_count, 3);
+        });
+    });
+
+    device_queue.wait();
+/*        for(int idx=0; idx<vertex_count; idx++)
+            std::cout << "\nThe nearest Neighbor of " << dataview[idx] << " is " <<
+                modelview_device_tree[nearest_neighbor_indices[idx]].point << std::flush;*/
 }
 
 #endif //KHALID_KD_TREE_KHALID_NEAREST_NEIGHBOR_HPP
