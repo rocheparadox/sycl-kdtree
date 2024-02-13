@@ -9,7 +9,7 @@ find_package(oneDPL REQUIRED)
 
 set(TARGET_NAME khalid_kd_tree)
 set(SOURCE_FILE "main.cpp")
-set(COMPILE_AUX_FILES "khalid_kdtree_sycl.hpp" "khalid_nearest_neighbor.hpp")
+set(COMPILE_AUX_FILES "../include/khalid_kdtree_sycl.hpp" "../include/khalid_nearest_neighbor.hpp")
 set(SYCL_LINKER "-fsycl")
 
 if(DEFINED VERTEX_COUNT)
@@ -27,9 +27,19 @@ set_target_properties(${TARGET_NAME}.${VERTEX_COUNT} PROPERTIES LINK_FLAGS ${SYC
 set(NVIDIA_GPU_COMPILE_FLAGS "-fsycl-targets=nvptx64-nvidia-cuda")
 # use cmake -D USER_HARDWARE_FLAGS=<flags> to set extra flags for FPGA backend compilation
 
-## This section compiles for nvidia-gpu
+## This section compiles for nvidia-gpu test for a single point
+set(NVIDIA_SOURCE_FILE test_nvidia.cpp)
 set(NVIDIA_TARGET ${TARGET_NAME}.${VERTEX_COUNT}.nvidia-gpu)
-add_executable(${NVIDIA_TARGET} EXCLUDE_FROM_ALL ${SOURCE_FILE} ${AUX_FILES})
+add_executable(${NVIDIA_TARGET} EXCLUDE_FROM_ALL ${NVIDIA_SOURCE_FILE} ${AUX_FILES})
 set_target_properties(${NVIDIA_TARGET} PROPERTIES COMPILE_FLAGS "-fsycl  ${NVIDIA_GPU_COMPILE_FLAGS} ${VERTEX_COUNT_FLAG}" )
 set_target_properties(${NVIDIA_TARGET} PROPERTIES LINK_FLAGS "-fsycl ${NVIDIA_GPU_COMPILE_FLAGS}")
-add_custom_target(nvidiagpu DEPENDS ${NVIDIA_TARGET})
+add_custom_target(nvidiagpu-single-point DEPENDS ${NVIDIA_TARGET})
+
+
+## This section compiles for nvidia-gpu correspondence for plyfiles
+set(NVIDIA_CORRESPONDENCE_SOURCE_FILE nvidia_correspondence.cpp)
+SET(NVIDIA_CORRESPONDENCE_TARGET ${TARGET_NAME}${VERTEX_COUNT}.nvidiagpu-plyfile)
+add_executable(${NVIDIA_CORRESPONDENCE_TARGET} EXCLUDE_FROM_ALL ${NVIDIA_CORRESPONDENCE_SOURCE_FILE} ${AUX_FILES})
+set_target_properties(${NVIDIA_CORRESPONDENCE_TARGET} PROPERTIES COMPILE_FLAGS "-fsycl  ${NVIDIA_GPU_COMPILE_FLAGS} ${VERTEX_COUNT_FLAG}" )
+set_target_properties(${NVIDIA_CORRESPONDENCE_TARGET} PROPERTIES LINK_FLAGS "-fsycl ${NVIDIA_GPU_COMPILE_FLAGS}")
+add_custom_target(nvidiagpu-plyfile DEPENDS ${NVIDIA_CORRESPONDENCE_TARGET})
