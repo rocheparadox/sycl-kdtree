@@ -58,7 +58,7 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
             }
             else{
                 // traverse through the tree
-                if (query_point[sorting_dimension] < device_tree[search_index].point[sorting_dimension]) {
+                if (query_point[sorting_dimension] < device_tree[search_index][sorting_dimension]) {
                     //std::cout << " and we are going to left child" << std::flush;
                     search_index = khalid::l_child(search_index);
                 } else {
@@ -72,14 +72,14 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
 
             //std::cout << " Previous index is " << previous_search_index << std::flush;
             // traverse up
-            float euc_distance = euclidean_distance(device_tree[search_index].point, query_point);
+            float euc_distance = euclidean_distance(device_tree[search_index], query_point);
             if (euc_distance < nearest_neighbor_distance || nearest_neighbor_distance == -1) {
                 nearest_neighbor_distance = euc_distance;
                 nearest_neighbor_index = search_index;
             }
 
             if (khalid::l_child(search_index) < vertex_count && khalid::r_child(search_index) < vertex_count &&
-                static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index].point[sorting_dimension])) <
+                static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index][sorting_dimension])) <
                 nearest_neighbor_distance) {
                 /*        std::cout << "\n\n-------XXX Node with point " << current_node_point[splitting_dim] <<
                         " has lower axis distance XXX--------- axis distance : " << std::abs(query_point[splitting_dim] - current_node_point[splitting_dim]) <<
@@ -87,7 +87,7 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
 
                 // set search index to farther child
                 int farther_child;
-                if (query_point[sorting_dimension] < device_tree[search_index].point[sorting_dimension]) {
+                if (query_point[sorting_dimension] < device_tree[search_index][sorting_dimension]) {
                     farther_child = khalid::r_child(search_index);
                 } else {
                     farther_child = khalid::l_child(search_index);
@@ -127,12 +127,10 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
     return nearest_neighbor_index;
 }
 
-template<typename Point>
-void get_nearest_neighbor_kernel(khalid::Node<Point>* modelview_device_tree, Point* dataview,
+template<typename Point, typename Node>
+void get_nearest_neighbor_kernel(Node* modelview_device_tree, Point* dataview,
                                  int vertex_count, int* nearest_neighbour_index, sycl::queue device_queue
                                  ){
-
-
     device_queue.submit([&] (sycl::handler &hndlr){
         hndlr.parallel_for(vertex_count, [=] (sycl::id<1> idx){
             nearest_neighbour_index[idx] = get_nearest_neighbor(modelview_device_tree, dataview[idx], vertex_count, 3);

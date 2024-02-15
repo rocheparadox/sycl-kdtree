@@ -64,16 +64,16 @@ namespace khalid{
     };
 
     template<typename Point>
-    struct Node{
-        Point point;
-        int lla_index;
+    struct Node: public Point{
+        public:
+            int lla_index;
     };
 
 
     template<typename Point>
     bool less_than_compare(Node<Point> node_a, Node<Point> node_b, int dim){
         return node_a.lla_index < node_b.lla_index || node_a.lla_index == node_b.lla_index && \
-        node_a.point[dim] < node_b.point[dim];
+        node_a[dim] < node_b[dim];
     }
 
     inline int r_child(int index){

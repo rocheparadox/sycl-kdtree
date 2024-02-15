@@ -57,7 +57,9 @@ int main(){
 
     for(int idx=0; idx<modelview_pcl.size(); idx++){
         Node3D node;
-        node.point = modelview_pcl[idx];
+        node.x = modelview_pcl[idx].x;
+        node.y = modelview_pcl[idx].y;
+        node.z = modelview_pcl[idx].z;
         node.lla_index = 0;
         modelview_tree.push_back(node);
     }
@@ -91,7 +93,7 @@ int main(){
     int* nearest_neighbour_index = sycl::malloc_shared<int>(vertex_count, device_queue);
     get_nearest_neighbor_kernel(device_tree, dataview, vertex_count, nearest_neighbour_index, device_queue);
     for(int idx=0; idx<dataview_pcl.size(); idx++){
-        std::cout << "\nThe correspondent point of " << dataview[idx] << " is " << device_tree[nearest_neighbour_index[idx]].point << std::flush; //" with euc distance " << kdtree_correspondent_points[idx].euc_distance <<std::flush;
+        std::cout << "\nThe correspondent point of " << dataview[idx] << " is " << device_tree[nearest_neighbour_index[idx]] << std::flush; //" with euc distance " << kdtree_correspondent_points[idx].euc_distance <<std::flush;
     }
 
     std::cout << "\n\n" << std::flush;
