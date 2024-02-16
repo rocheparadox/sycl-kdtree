@@ -26,6 +26,16 @@ void get_nearest_neighbor_kernel(khalid::Node<Point>* device_tree, Point  query_
 }
 */
 
+namespace khalid {
+    template<typename ModelviewDatatype, typename DataviewDatatype>
+    struct Correspondence {
+        DataviewDatatype *dataview_point;
+        ModelviewDatatype *modelview_point;
+        float euclidean_distance;
+    };
+}
+
+
 template<typename PointDatatype>
 float euclidean_distance(khalid::Point3D<PointDatatype> pointa, khalid::Point3D<PointDatatype> pointb){
     return sqrtf(powf(pointa.x - pointb.x, 2) + powf(pointa.y - pointb.y, 2) + powf(pointa.z - pointb.z, 2));
@@ -79,8 +89,7 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
             }
 
             if (khalid::l_child(search_index) < vertex_count && khalid::r_child(search_index) < vertex_count &&
-                static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index][sorting_dimension])) <
-                nearest_neighbor_distance) {
+                static_cast<float>(abs(query_point[sorting_dimension] - device_tree[search_index][sorting_dimension])) < nearest_neighbor_distance) {
                 /*        std::cout << "\n\n-------XXX Node with point " << current_node_point[splitting_dim] <<
                         " has lower axis distance XXX--------- axis distance : " << std::abs(query_point[splitting_dim] - current_node_point[splitting_dim]) <<
                         " min distance: " << *min_distance <<std::flush;*/
@@ -130,10 +139,30 @@ int get_nearest_neighbor(khalid::Node<Point>* device_tree, Point query_point, in
 template<typename Point, typename Node>
 void get_nearest_neighbor_kernel(Node* modelview_device_tree, Point* dataview,
                                  int vertex_count, int* nearest_neighbour_index, sycl::queue device_queue
-                                 ){
+){
     device_queue.submit([&] (sycl::handler &hndlr){
         hndlr.parallel_for(vertex_count, [=] (sycl::id<1> idx){
             nearest_neighbour_index[idx] = get_nearest_neighbor(modelview_device_tree, dataview[idx], vertex_count, 3);
+        });
+    });
+
+    device_queue.wait();
+/*        for(int idx=0; idx<vertex_count; idx++)
+            std::cout << "\nThe nearest Neighbor of " << dataview[idx] << " is " <<
+                modelview_device_tree[nearest_neighbor_indices[idx]].point << std::flush;*/
+}
+
+template<typename Node, typename Point>
+void get_nearest_neighbor_kernel(Node* modelview_device_tree, Point* dataview,
+                                 khalid::Correspondence<Node, Point>* correspondences,
+                                 int vertex_count, sycl::queue device_queue){
+
+    device_queue.submit([&] (sycl::handler &hndlr){
+        hndlr.parallel_for(vertex_count, [=] (sycl::id<1> idx){
+            correspondences[idx].dataview_point = &dataview[idx];
+            int nearest_neighbour_index = get_nearest_neighbor(modelview_device_tree, dataview[idx], vertex_count, 3);
+            correspondences[idx].modelview_point = &modelview_device_tree[nearest_neighbour_index];
+            correspondences[idx].euclidean_distance = euclidean_distance(modelview_device_tree[nearest_neighbour_index], dataview[idx]);
         });
     });
 

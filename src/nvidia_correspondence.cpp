@@ -96,6 +96,13 @@ int main(){
         std::cout << "\nThe correspondent point of " << dataview[idx] << " is " << device_tree[nearest_neighbour_index[idx]] << std::flush; //" with euc distance " << kdtree_correspondent_points[idx].euc_distance <<std::flush;
     }
 
+    khalid::Correspondence<Node3D, Point>* correspondences = sycl::malloc_shared<khalid::Correspondence<Node3D, Point>>(vertex_count, device_queue);
+    get_nearest_neighbor_kernel(device_tree, dataview, correspondences, vertex_count, device_queue);
+    device_queue.wait();
+    for(int idx=0; idx<dataview_pcl.size(); idx++){
+        std::cout << "\n" << idx << " The correspondent point of " << *correspondences[idx].dataview_point << " is " << *correspondences[idx].modelview_point << " with euclidean distance " << correspondences[idx].euclidean_distance << std::flush; //" with euc distance " << kdtree_correspondent_points[idx].euc_distance <<std::flush;
+    }
+
     std::cout << "\n\n" << std::flush;
     return 0;
 }
